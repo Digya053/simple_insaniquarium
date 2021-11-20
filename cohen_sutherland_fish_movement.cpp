@@ -61,6 +61,9 @@ static double y2_move_fish1;
 static bool fish1_direction;
 static bool fish2_direction;
 
+static int x_cursor_food;
+static int y_cursor_food;
+
 static double x1_move_fish2;
 static double y1_move_fish2;
 static double x2_move_fish2;
@@ -68,6 +71,7 @@ static double y2_move_fish2;
 bool done = false;
 bool front = true;
 bool back = false;
+bool food_flag;
 static int random_rotation_angle;
 
 static float matShine[] = { 25 };	//Shininess value used throughout the program
@@ -116,6 +120,10 @@ void init(void) {
 	y2_move_fish2 = 0;
 	fish1_direction = true; //clockwise
 	fish2_direction = false;
+	food_flag = false;
+
+	x_cursor_food = 0;
+	y_cursor_food = 0;
 	
 }
 
@@ -457,39 +465,23 @@ void draw_fish(double x1, double y1, double x2, double y2, bool clockwise, doubl
 		draw_fish_head_anticlockwise(x1-1, y1 - 5, x1-1, y1 + 5);	
 	}
 	glPopMatrix();
+
+}
+
+
+void draw_food(int x, int y) {
+	glColor3d(1, 1, 0);
 	
-
-
+	glPushMatrix();
+	glTranslated(x, y, 0);
+	glutSolidCube(5);
+	glPopMatrix();
+	//glutPostRedisplay();
+	//glutTimerFunc(1000, timer_func, 7);
+	
 }
 
 
-void display_func(void) {
-	/*
-	This is a glut display callback handler which is called whenever a window needs to be displayed or redisplayed. It clears the
-	canvas screen and reloads all the objects of the scene when called. This function also clears the food when lizard passes over
-	them, displays the text score and the text game over at the end of the game.
-	*/
-	glClear(GL_COLOR_BUFFER_BIT);
-	glLoadIdentity();
-	draw_subcanvas(x_min, x_max, y_min, y_max);
-	glColor3d(0, 0.7, 1);
-	draw_fish(0 + x1_move_fish1, 0 + y1_move_fish1, 40 + x1_move_fish1, 0 + y1_move_fish1, fish1_direction, 25, 50, 45);
-	cout << "x movement is from here " << x1_move_fish1  << "to here  " << 40 + x1_move_fish1 << endl;
-	cout << "y movement is from here" << y1_move_fish1 << endl;
-	glColor3d(0, 0.9, 0.1);
-	draw_fish(x1_move_fish2, 0 + y1_move_fish2, 30 + x1_move_fish2, 0 + y1_move_fish2, fish2_direction, 30, 40, 40);
-	//draw_fish_head(0, 0, 0, 10);
-	//apply_cohen_sutherland_algorithm(-200, -200, 100, 100);
-	display_score(250, -270);
-	display_timer(300, 270);
-	if (end_game) {
-		glutKeyboardFunc(NULL);
-		display_game_over(-50, 0, -150);
-	}
-	glutSwapBuffers();
-	glFlush();
-
-}
 
 
 
@@ -517,7 +509,7 @@ void timer_func(int val) {
 		else {
 			glutTimerFunc(0, timer_func, 4);
 		}
-		glutTimerFunc(5000, timer_func, 5);
+		glutTimerFunc(10000, timer_func, 5);
 
 		break;
 	case 2:
@@ -610,9 +602,74 @@ void timer_func(int val) {
 		calculate_random_angle();
 		glutTimerFunc(2000, timer_func, 6);
 		break;
+	case 7:
+		food_flag = false;
+		glutPostRedisplay();
+		break;
 	default:
 		break;
 	}
+}
+
+
+
+void display_func(void) {
+	/*
+	This is a glut display callback handler which is called whenever a window needs to be displayed or redisplayed. It clears the
+	canvas screen and reloads all the objects of the scene when called. This function also clears the food when lizard passes over
+	them, displays the text score and the text game over at the end of the game.
+	*/
+	glClear(GL_COLOR_BUFFER_BIT);
+	glLoadIdentity();
+	draw_subcanvas(x_min, x_max, y_min, y_max);
+	glColor3d(0, 0.7, 1);
+	draw_fish(0 + x1_move_fish1, 0 + y1_move_fish1, 40 + x1_move_fish1, 0 + y1_move_fish1, fish1_direction, 25, 50, 45);
+	glColor3d(0, 0.9, 0.1);
+	draw_fish(x1_move_fish2, 0 + y1_move_fish2, 30 + x1_move_fish2, 0 + y1_move_fish2, fish2_direction, 30, 40, 40);
+	//draw_fish_head(0, 0, 0, 10);
+	//apply_cohen_sutherland_algorithm(-200, -200, 100, 100);
+	if (food_flag) {
+		//glPushMatrix();
+		//glutSolidCube(5);
+		//glPopMatrix();
+		draw_food(x_cursor_food, y_cursor_food);
+	}
+	display_score(250, -270);
+	display_timer(300, 270);
+	if (end_game) {
+		glutKeyboardFunc(NULL);
+		display_game_over(-50, 0, -150);
+	}
+	//glutTimerFunc(1000, timer_func, 7);
+	glutSwapBuffers();
+	glFlush();
+
+}
+
+void passive_motion_handler(int x, int y) {
+	cout << "measured x is" << x << endl;
+	cout << "measuered y is " << y << endl;	
+	x_cursor_food = x - 400;
+	y_cursor_food = 300 - y;
+	if (x_cursor_food >= x_min && x_cursor_food <= x_max && y_cursor_food >= y_min && y_cursor_food <= y_max) {
+		food_flag = true;
+		glutPostRedisplay();
+	}
+	cout << "food x is" << x_cursor_food << endl;
+	cout << "food y is " << y_cursor_food << endl;
+	
+
+}
+
+void mouse_handler(int botton, int state, int x, int y) {
+	cout << "went here" << endl;
+	//if (x > x_min && x < x_max && y > y_min && y < y_max) {
+	food_flag = true;
+	//x_cursor_food = x;
+	//y_cursor_food = y;
+	cout << "x_cursor_food is" << x_cursor_food << endl;
+	cout << "y_cursor_food is" << y_cursor_food << endl;
+	glutPostRedisplay();
 }
 
 void keyboard_func(unsigned char key, int x, int y) {
@@ -652,12 +709,37 @@ void keyboard_func(unsigned char key, int x, int y) {
 		glutPostRedisplay();
 		break;
 	case 'F': case 'f':
+		x_cursor_food = x - 400;
+		y_cursor_food = 300 - y;
+		if (x_cursor_food >= x_min && x_cursor_food <= x_max && y_cursor_food >= y_min && y_cursor_food <= y_max) {
+			food_flag = true;
+			glutPostRedisplay();
+		}
+		glutTimerFunc(1000, timer_func, 7);
 		break;
 
 	default:
 		break;
 	}
 }
+
+void measure(int button, int state, int x, int y) {
+	cout << "measured x is" << x << endl;
+	cout << "measuered y is " << y << endl;
+}
+
+void measure_one(int x, int y) {
+	cout << "measured x is" << x << endl;
+	cout << "measuered y is " << y << endl;
+	food_flag = true;
+	x_cursor_food = x-400;
+	y_cursor_food = 300-y;
+	cout << "food x is" << x_cursor_food << endl;
+	cout << "food y is " << y_cursor_food << endl;
+	glutPostRedisplay();
+
+}
+
 
 /************** MAIN FUNCTION **************/
 int main(int argc, char ** argv) {
@@ -666,8 +748,11 @@ int main(int argc, char ** argv) {
 	my_setup(canvas_Width, canvas_Height, canvas_Name);
 	glutDisplayFunc(display_func);
 	glutKeyboardFunc(keyboard_func);
-	glutTimerFunc(62, timer_func, 1);
-	glutTimerFunc(2000, timer_func, 6);
+	//glutTimerFunc(62, timer_func, 1);
+	//glutTimerFunc(2000, timer_func, 6);
+	//glutMouseFunc(measure);
+	//glutPassiveMotionFunc(measure_one);
+	//glutPassiveMotionFunc(passive_motion_handler);
 	// Set up light source at the world origin. Initialized at main to reduce overhead though small if initialized in the
 	// display callback handler
 	//setup_light_source();
