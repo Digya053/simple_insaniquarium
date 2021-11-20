@@ -78,6 +78,7 @@ static double x_tip_head;
 bool done = false;
 bool front = true;
 bool back = false;
+static bool fed = false;
 bool food_flag;
 static int random_rotation_angle;
 
@@ -218,6 +219,12 @@ void display_timer(float x, float y) {
 			The z-position where the score should be placed.
 	*/
 	//glColor3f(1.0, 1.0, 1.0);
+	if (timer > 3) {
+		glColor3f(1.0, 1.0, 1.0);
+	}
+	else {
+		glColor3f(1, 0.6, 0.1);
+	}
 	glPushMatrix();
 	glRasterPos2f(x, y);
 	char timer_text[20] = "TIMER: ";
@@ -485,6 +492,23 @@ void draw_fish(double x1, double y1, double x2, double y2, bool clockwise, doubl
 
 }
 
+void handle_food_ingest() {
+	if (fish1_direction == true) {
+		if (x_move_fish1 < x_cursor_food - 10) {
+			fed = true;
+			//score += 50;
+			//timer = 8;
+		}
+	}
+	else {
+		if (x_move_fish1 > x_cursor_food + 10) {
+			fed = true;
+			//score += 50;
+			//score += 50;
+			//timer = 8;
+		}
+	}
+}
 
 void draw_food(int x, int y) {
 	glColor3d(1, 1, 0);
@@ -493,25 +517,13 @@ void draw_food(int x, int y) {
 	glTranslated(x, y, 0);
 	glutSolidCube(5);
 	glPopMatrix();
+	handle_food_ingest();
 	//glutPostRedisplay();
 	//glutTimerFunc(1000, timer_func, 7);
 	
 }
 
-void handle_food_ingest() {
-	if (fish1_direction == true) {
-		if (x_move_fish1 < x_cursor_food - 10) {
-			score += 50;
-			timer = 8;
-		}
-	}
-	else {
-		if (x_move_fish1 > x_cursor_food + 10) {
-			score += 50;
-			timer = 8;
-		}
-	}
-}
+
 
 void fish1_turn_back(int random_rotation_angle) {
 	if (random_rotation_angle == 0) {
@@ -716,11 +728,23 @@ void timer_func(int val) {
 		break;
 	case 7:
 		food_flag = false;
-		glutPostRedisplay();
+		//glutPostRedisplay();
 		break;
 	case 8:
 		timer -= 1;
+		if (timer < 0){
+			timer = 0;
+		}
+		if (fed) {
+			timer = 8;
+			score += 50;
+			fed = false;
+		}
 		glutTimerFunc(1000, timer_func, 8);
+		break;
+	case 10:
+		glutPostRedisplay();
+		glutTimerFunc(62, timer_func, 10);
 		break;
 	default:
 		break;
@@ -750,7 +774,6 @@ void display_func(void) {
 		//glutSolidCube(5);
 		//glPopMatrix();
 		draw_food(x_cursor_food, y_cursor_food);
-		handle_food_ingest();
 	}
 	if (end_game) {
 		glutKeyboardFunc(NULL);
@@ -769,7 +792,7 @@ void passive_motion_handler(int x, int y) {
 	y_cursor_food = 300 - y;
 	if (x_cursor_food >= x_min && x_cursor_food <= x_max && y_cursor_food >= y_min && y_cursor_food <= y_max) {
 		food_flag = true;
-		//glutPostRedisplay();
+		glutPostRedisplay();
 	}
 	cout << "food x is" << x_cursor_food << endl;
 	cout << "food y is " << y_cursor_food << endl;
@@ -829,7 +852,7 @@ void keyboard_func(unsigned char key, int x, int y) {
 		y_cursor_food = 300 - y;
 		if (x_cursor_food >= x_min && x_cursor_food <= x_max && y_cursor_food >= y_min && y_cursor_food <= y_max) {
 			food_flag = true;
-			//glutPostRedisplay();
+			glutPostRedisplay();
 		}
 		glutTimerFunc(1000, timer_func, 7);
 		break;
@@ -864,10 +887,11 @@ int main(int argc, char ** argv) {
 	my_setup(canvas_Width, canvas_Height, canvas_Name);
 	glutDisplayFunc(display_func);
 	glutKeyboardFunc(keyboard_func);
-	glutTimerFunc(62, timer_func, 1);
-	glutTimerFunc(2000, timer_func, 6);
+	//glutTimerFunc(62, timer_func, 1);
+	//glutTimerFunc(2000, timer_func, 6);
 	glutTimerFunc(1000, timer_func, 8);
 	//glutMouseFunc(measure);
+	glutTimerFunc(62, timer_func, 10);
 	//glutPassiveMotionFunc(measure_one);
 	//glutPassiveMotionFunc(passive_motion_handler);
 	// Set up light source at the world origin. Initialized at main to reduce overhead though small if initialized in the
