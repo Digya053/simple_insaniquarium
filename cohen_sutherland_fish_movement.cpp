@@ -91,6 +91,7 @@ enum {
 void timer_func(int val);
 void keyboard_func(unsigned char key, int x, int y);
 //void apply_cohen_sutherland_algorithm(int x1, int y1, int x2, int y2);
+void calculate_random_angle();
 
 void init(void) {
 	/* This function sets the background color, initializes all the global variables and calculate random
@@ -109,12 +110,13 @@ void init(void) {
 	x2_move_fish1 = 0;
 	y2_move_fish1 = 0;
 
-	x1_move_fish2 = 0;
+	x1_move_fish2 = 75;
 	y1_move_fish2 = 0;
 	x2_move_fish2 = 0;
 	y2_move_fish2 = 0;
 	fish1_direction = true; //clockwise
 	fish2_direction = false;
+	
 }
 
 void setup_light_source(void) {
@@ -201,7 +203,7 @@ void display_timer(float x, float y) {
 	glPopMatrix();
 }
 
-void display_game_over(float x, float y, float z) {
+void display_game_over(double x, double y, double z) {
 	/*
 	This function is used for displaying game over at the end of game.
 	----------
@@ -213,36 +215,36 @@ void display_game_over(float x, float y, float z) {
 			The z-position where the game over should be placed.
 	*/
 	glPushMatrix();
-	glRasterPos3f(x, y, z);
+	glRasterPos3d(x, y, z);
 	writeBitmapString(GLUT_BITMAP_HELVETICA_12, game_over);
 	glPopMatrix();
 }
 
 
 
-void draw_subcanvas(float x_min, float x_max, float y_min, float y_max) {
+void draw_subcanvas(double x_min, double x_max, double y_min, double y_max) {
 	glPushMatrix();
 	glColor3f(1.0, 1.0, 1.0);
 	glBegin(GL_LINE_LOOP);
-	glVertex2f(x_min, y_min);
-	glVertex2f(x_max, y_min);
-	glVertex2f(x_max, y_max);
-	glVertex2f(x_min, y_max);
+	glVertex2d(x_min, y_min);
+	glVertex2d(x_max, y_min);
+	glVertex2d(x_max, y_max);
+	glVertex2d(x_min, y_max);
 	glEnd();
 	glPopMatrix();
 
 }
 
-void draw_line(int x1, int y1, int x2, int y2) {
+void draw_line(double x1, double y1, double x2,double y2) {
 	glPushMatrix();
 	glBegin(GL_LINES);
-	glVertex2f(x1, y1);
-	glVertex2f(x2, y2);
+	glVertex2d(x1, y1);
+	glVertex2d(x2, y2);
 	glEnd();
 	glPopMatrix();
 }
 
-int compute_outcode(int x, int y) {
+int compute_outcode(double x, double y) {
 	int outcode = 0;
 	if (y > y_max) {
 		outcode |= TOP;
@@ -256,7 +258,7 @@ int compute_outcode(int x, int y) {
 	if (x < x_min) {
 		outcode |= LEFT;
 	}
-	return outcode;
+	return (int)outcode;
 }
 
 void draw_cohen_sutherland_line_clip(double x1, double y1, double x2, double y2) {
@@ -298,7 +300,7 @@ void draw_cohen_sutherland_line_clip(double x1, double y1, double x2, double y2)
 	}
 }
 
-void apply_cohen_sutherland_line_clip(double x1, double y1, double x2, double y2)
+/*void apply_cohen_sutherland_line_clip(double x1, double y1, double x2, double y2)
 	{
 		// Compute region codes for P1, P2
 		int code1 = compute_outcode(x1, y1);
@@ -379,8 +381,15 @@ void apply_cohen_sutherland_line_clip(double x1, double y1, double x2, double y2
 		}
 		else
 			cout << "Line rejected" << endl;
-}
+}*/
 
+void calculate_random_angle() {
+	srand((unsigned int)time(NULL));
+	const int array_num[2] = { -45, 45 };
+	int rand_index = rand() % 2;
+	random_rotation_angle = (int)array_num[rand_index];
+	
+}
 
 void draw_fish_head_clockwise(double x1, double y1, double x2, double y2) {
 	draw_cohen_sutherland_line_clip(x1, y1, x2, y2);
@@ -424,22 +433,22 @@ void draw_fish(double x1, double y1, double x2, double y2, bool clockwise, doubl
 	draw_cohen_sutherland_line_clip(x1, y1, x1 + x_mid, y1 + y_height);
 	
 	draw_cohen_sutherland_line_clip(x1 + x_mid, y1 + y_height, x2, y2);
-	glPopMatrix();
+	/*glPopMatrix();
 	glPushMatrix();
 	glTranslated(x1, y1, 0);
 	glRotated(random_rotation_angle, 0, 0, 1);
-	glTranslated(-x1, -y1, 0);
+	glTranslated(-x1, -y1, 0);*/
 	//draw_cohen_sutherland_line_clip(x1, y1, x1 + x_mid, -(y1 + y_height));
 	//draw_cohen_sutherland_line_clip(x1 + x_mid, -y1 - y_height, x2, y2);
 	draw_cohen_sutherland_line_clip(x1, y1, x1+x_mid, y1-y_height);
 	draw_cohen_sutherland_line_clip(x1 + x_mid, y1 - y_height, x2, y2);
-	glPopMatrix();
+	//glPopMatrix();
 	
 
-	glPushMatrix();
+	/*glPushMatrix();
 	glTranslated(x1, y1, 0);
 	glRotated(random_rotation_angle, 0, 0, 1);
-	glTranslated(-x1, -y1, 0);
+	glTranslated(-x1, -y1, 0);*/
 	
 	if (clockwise) {
 		draw_fish_head_clockwise(x2+1, y2-5, x2+1, y2+5);
@@ -463,12 +472,12 @@ void display_func(void) {
 	glClear(GL_COLOR_BUFFER_BIT);
 	glLoadIdentity();
 	draw_subcanvas(x_min, x_max, y_min, y_max);
-	glColor3f(0, 0.7, 1);
+	glColor3d(0, 0.7, 1);
 	draw_fish(0 + x1_move_fish1, 0 + y1_move_fish1, 40 + x1_move_fish1, 0 + y1_move_fish1, fish1_direction, 25, 50, 45);
 	cout << "x movement is from here " << x1_move_fish1  << "to here  " << 40 + x1_move_fish1 << endl;
 	cout << "y movement is from here" << y1_move_fish1 << endl;
-	glColor3f(0, 0.9, 0.1);
-	draw_fish(0 + x1_move_fish2, 0 + y1_move_fish2, 30 + x1_move_fish2, 0 + y1_move_fish2, fish2_direction, 30, 40, 40);
+	glColor3d(0, 0.9, 0.1);
+	draw_fish(x1_move_fish2, 0 + y1_move_fish2, 30 + x1_move_fish2, 0 + y1_move_fish2, fish2_direction, 30, 40, 40);
 	//draw_fish_head(0, 0, 0, 10);
 	//apply_cohen_sutherland_algorithm(-200, -200, 100, 100);
 	display_score(250, -270);
@@ -530,7 +539,7 @@ void timer_func(int val) {
 			x2_move_fish2 -= 4;	
 		}
 		glutPostRedisplay();
-		glutTimerFunc(62.5, timer_func, 1);
+		glutTimerFunc(62, timer_func, 1);
 		break;
 	case 3:
 		if (fish1_direction) {
@@ -560,7 +569,7 @@ void timer_func(int val) {
 
 		}
 		glutPostRedisplay();
-		glutTimerFunc(62.5, timer_func, 1);
+		glutTimerFunc(62, timer_func, 1);
 		break;
 	case 4:
 			if (fish1_direction) {
@@ -591,10 +600,15 @@ void timer_func(int val) {
 
 			}
 			glutPostRedisplay();
-			glutTimerFunc(62.5, timer_func, 1);
+			glutTimerFunc(62, timer_func, 1);
 		break;
 	case 5:
 		exit(0);
+		break;
+
+	case 6:
+		calculate_random_angle();
+		glutTimerFunc(2000, timer_func, 6);
 		break;
 	default:
 		break;
@@ -637,6 +651,8 @@ void keyboard_func(unsigned char key, int x, int y) {
 		y_max = y_max - 5;
 		glutPostRedisplay();
 		break;
+	case 'F': case 'f':
+		break;
 
 	default:
 		break;
@@ -650,7 +666,8 @@ int main(int argc, char ** argv) {
 	my_setup(canvas_Width, canvas_Height, canvas_Name);
 	glutDisplayFunc(display_func);
 	glutKeyboardFunc(keyboard_func);
-	glutTimerFunc(62.5, timer_func, 1);
+	glutTimerFunc(62, timer_func, 1);
+	glutTimerFunc(2000, timer_func, 6);
 	// Set up light source at the world origin. Initialized at main to reduce overhead though small if initialized in the
 	// display callback handler
 	//setup_light_source();
