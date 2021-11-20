@@ -54,8 +54,8 @@ static int x_min;
 static int x_max;
 static int y_min;
 static int y_max;
-static double x1_move_fish1;
-static double y1_move_fish1;
+static double x_move_fish1;
+static double y_move_fish1;
 static double x2_move_fish1;
 static double y2_move_fish1;
 static bool fish1_direction;
@@ -64,10 +64,17 @@ static bool fish2_direction;
 static int x_cursor_food;
 static int y_cursor_food;
 
-static double x1_move_fish2;
-static double y1_move_fish2;
+static double x_move_fish2;
+static double y_move_fish2;
 static double x2_move_fish2;
 static double y2_move_fish2;
+
+static double x_tip_head_fish1;
+static double y_tip_head_fish1;
+
+static double x_tip_head_fish2;
+static double y_tip_head_fish2;
+static double x_tip_head;
 bool done = false;
 bool front = true;
 bool back = false;
@@ -105,17 +112,21 @@ void init(void) {
 	x_max = 200;
 	y_min = -150;
 	y_max = 150;
+	//x_min = -400;
+	//x_max = 400;
+	//y_min = -300;
+	//y_max = 300;
 	score = 0;
 	timer = 8;
 	random_rotation_angle = 0;
 
-	x1_move_fish1 = 0;
-	y1_move_fish1 = 0;
+	x_move_fish1 = 0;
+	y_move_fish1 = 0;
 	x2_move_fish1 = 0;
 	y2_move_fish1 = 0;
 
-	x1_move_fish2 = 75;
-	y1_move_fish2 = 0;
+	x_move_fish2 = 75;
+	y_move_fish2 = 0;
 	x2_move_fish2 = 0;
 	y2_move_fish2 = 0;
 	fish1_direction = true; //clockwise
@@ -124,6 +135,11 @@ void init(void) {
 
 	x_cursor_food = 0;
 	y_cursor_food = 0;
+	x_tip_head_fish1 = 0;
+	y_tip_head_fish1 = 0;
+
+	x_tip_head_fish2 = 0;
+	y_tip_head_fish2 = 0;
 	
 }
 
@@ -178,7 +194,7 @@ void display_score(float x, float y) {
 		z: float
 			The z-position where the score should be placed.
 	*/
-	glColor3f(0.0, 0.0, 0.0);
+	glColor3f(1.0, 1.0, 1.0);
 	glPushMatrix();
 	glRasterPos2f(x, y);
 	char score_text[20] = "SCORE: ";
@@ -201,6 +217,7 @@ void display_timer(float x, float y) {
 		z: float
 			The z-position where the score should be placed.
 	*/
+	//glColor3f(1.0, 1.0, 1.0);
 	glPushMatrix();
 	glRasterPos2f(x, y);
 	char timer_text[20] = "TIMER: ";
@@ -481,10 +498,88 @@ void draw_food(int x, int y) {
 	
 }
 
+void handle_food_ingest() {
+	if (fish1_direction == true) {
+		if (x_move_fish1 < x_cursor_food - 10) {
+			score += 50;
+			timer = 8;
+		}
+	}
+	else {
+		if (x_move_fish1 > x_cursor_food + 10) {
+			score += 50;
+			timer = 8;
+		}
+	}
+}
 
+void fish1_turn_back(int random_rotation_angle) {
+	if (random_rotation_angle == 0) {
+		if (x_tip_head_fish1 >= 350) {
+			fish1_direction = false;
+		}
+		else if (x_tip_head_fish1 <= -350) {
+			fish1_direction = true;
+		}
+	}
+	else {
+		if (x_tip_head_fish1 >= 270 || y_move_fish1 >= 250 || y_move_fish1 <= -250) {
+			fish1_direction = false;
+		}
+		else if (x_tip_head_fish1 <= -270 || y_move_fish1 >= 250 || y_move_fish1 <= -250) {
+			fish1_direction = true;
+		}
+	}
+}
 
+void fish2_turn_back(int random_rotation_angle) {
+	if (random_rotation_angle == 0) {
+		if (x_tip_head_fish2 >= 350) {
+			fish2_direction = false;
+		}
+		else if (x_tip_head_fish2 <= -350) {
+			fish2_direction = true;
+		}
+	}
+	else {
+		if (x_tip_head_fish2 >= 270 || y_move_fish2 >= 250 || y_move_fish2 <= -250) {
+			fish2_direction = false;
+		}
+		else if (x_tip_head_fish2 <= -270 || y_move_fish2 >= 250 || y_move_fish2 <= -250) {
+			fish2_direction = true;
+		}
+	}
+}
 
+void fish1_end_boundary_test() {
+	if ((x_tip_head_fish1) >= 270) {
+		x_move_fish1 = 270;
+	}
+	if ((x_tip_head_fish1) <= -270) {
+		x_move_fish1 = -270;
+	}
+	if (y_move_fish1 >= 270) {
+		y_move_fish1 = 270;
+	}
+	if (y_move_fish1 <= -270) {
+		y_move_fish1 = -270;
+	}
+}
 
+void fish2_end_boundary_test() {
+	if ((x_tip_head_fish2) >= 270) {
+		x_move_fish2 = 270;
+	}
+	if ((x_tip_head_fish2) <= -270) {
+		x_move_fish2 = -270;
+	}
+	if (y_move_fish2 >= 270) {
+		y_move_fish2 = 270;
+	}
+	if (y_move_fish2 <= -270) {
+		y_move_fish2 = -270;
+	}
+}
 
 
 
@@ -509,88 +604,105 @@ void timer_func(int val) {
 		else {
 			glutTimerFunc(0, timer_func, 4);
 		}
-		glutTimerFunc(10000, timer_func, 5);
+		if (fish1_direction) {
+			x_tip_head_fish1 = x_move_fish1 + 10;
+		}
+		else {
+			x_tip_head_fish1 = x_move_fish1 - 10;
+		}
+		if (fish2_direction) {
+			x_tip_head_fish2 = x_move_fish2 + 10;
+		}
+		else {
+			x_tip_head_fish2 = x_move_fish2 - 10;
+		}
 
 		break;
 	case 2:
+		/*if (x_tip_head_fish1 >= 350) {
+			fish1_direction = false;
+		}
+		else if (x_tip_head_fish1 <= -350) {
+			fish1_direction = true;
+		}*/
+		fish1_turn_back(0);
+		fish2_turn_back(0);
 		if (fish1_direction) {
-			x1_move_fish1 += 4;
-			x2_move_fish1 += 4;
+			x_move_fish1 += 0.4;
 		}
 		else {
-			x1_move_fish1 -= 4;
-			x2_move_fish1 -= 4;
+			x_move_fish1 -= 0.4;
 		}
 
 		if (fish2_direction) {
-			x1_move_fish2 += 4;
-			x2_move_fish2 += 4;
+			x_move_fish2 += 0.4;
 		}
 		else {
-			x1_move_fish2 -= 4;
-			x2_move_fish2 -= 4;	
+			x_move_fish2 -= 0.4;
 		}
 		glutPostRedisplay();
 		glutTimerFunc(62, timer_func, 1);
 		break;
 	case 3:
+		/*if (x_tip_head_fish1 >= 270 || y_move_fish1 >= 250 || y_move_fish1 <= -250) {
+			fish1_direction = false;
+		}
+		else if (x_tip_head_fish1 <= -270 || y_move_fish1 >= 250 || y_move_fish1 <= -250) {
+			fish1_direction = true;
+		}*/
+		fish1_turn_back(45);
+		fish2_turn_back(45);
 		if (fish1_direction) {
-			x1_move_fish1 += 4;
-			x2_move_fish1 += 4;
-			y1_move_fish1 += 4;
-			y2_move_fish1 += 4;
+			x_move_fish1 += 0.4;
+			y_move_fish1 += 0.4;
 		}
 		else {
-			x1_move_fish1 -= 4;
-			x2_move_fish1 -= 4;
-			y1_move_fish1 -= 4;
-			y2_move_fish1 -= 4;
+			x_move_fish1 -= 0.4;
+			y_move_fish1 -= 4;
 		}
 
 		if (fish2_direction) {
-			x1_move_fish2 += 4;
-			x2_move_fish2 += 4;
-			y1_move_fish2 += 4;
-			y2_move_fish2 += 4;
+			x_move_fish2 += 0.4;
+			y_move_fish2 += 0.4;
 		}
 		else {
-			x1_move_fish2 -= 4;
-			x2_move_fish2 -= 4;
-			y1_move_fish2 -= 4;
-			y2_move_fish2 -= 4;
-
+			x_move_fish2 -= 0.4;
+			y_move_fish2 -= 0.4;
 		}
+		fish1_end_boundary_test();
+		fish2_end_boundary_test();
 		glutPostRedisplay();
 		glutTimerFunc(62, timer_func, 1);
 		break;
 	case 4:
+		/*if (x_tip_head_fish1 >= 270 || y_move_fish1 >= 250 || y_move_fish1 <= -250) {
+			fish1_direction = false;
+		}
+		else if (x_tip_head_fish1 <= -270 || y_move_fish1 >= 250|| y_move_fish1 <= -250) {
+			fish1_direction = true;
+		}*/
+		fish1_turn_back(-45);
+		fish2_turn_back(-45);
 			if (fish1_direction) {
-				x1_move_fish1 += 4;
-				x2_move_fish1 += 4;
-				y1_move_fish1 -= 4;
-				y2_move_fish1 -= 4;
+				x_move_fish1 += 0.4;
+				y_move_fish1 -= 0.4;
 			}
 			else {
-				x1_move_fish1 -= 4;
-				x2_move_fish1 -= 4;
-				y1_move_fish1 += 4;
-				y2_move_fish1 += 4;	
+				x_move_fish1 -= 0.4;
+				y_move_fish1 += 0.4;
 			}
 
 			if (fish2_direction) {
-				x1_move_fish2 += 4;
-				x2_move_fish2 += 4;
-				y1_move_fish2 -= 4;
-				y2_move_fish2 -= 4;
+				x_move_fish2 += 0.4;
+				y_move_fish2 -= 0.4;
 				
 			}
 			else {
-				x1_move_fish2 -= 4;
-				x2_move_fish2 -= 4;
-				y1_move_fish2 += 4;
-				y2_move_fish2 += 4;
-
+				x_move_fish2 -= 0.4;
+				y_move_fish2 += 0.4;
 			}
+			fish1_end_boundary_test();
+			fish2_end_boundary_test();
 			glutPostRedisplay();
 			glutTimerFunc(62, timer_func, 1);
 		break;
@@ -605,6 +717,10 @@ void timer_func(int val) {
 	case 7:
 		food_flag = false;
 		glutPostRedisplay();
+		break;
+	case 8:
+		timer -= 1;
+		glutTimerFunc(1000, timer_func, 8);
 		break;
 	default:
 		break;
@@ -623,19 +739,19 @@ void display_func(void) {
 	glLoadIdentity();
 	draw_subcanvas(x_min, x_max, y_min, y_max);
 	glColor3d(0, 0.7, 1);
-	draw_fish(0 + x1_move_fish1, 0 + y1_move_fish1, 40 + x1_move_fish1, 0 + y1_move_fish1, fish1_direction, 25, 50, 45);
+	draw_fish(x_move_fish1, y_move_fish1, 40 + x_move_fish1, y_move_fish1, fish1_direction, 25, 50, 45);
 	glColor3d(0, 0.9, 0.1);
-	draw_fish(x1_move_fish2, 0 + y1_move_fish2, 30 + x1_move_fish2, 0 + y1_move_fish2, fish2_direction, 30, 40, 40);
-	//draw_fish_head(0, 0, 0, 10);
-	//apply_cohen_sutherland_algorithm(-200, -200, 100, 100);
+	draw_fish(x_move_fish2, y_move_fish2, 30 + x_move_fish2, y_move_fish2, fish2_direction, 30, 40, 40);
+	
+	display_score(250, -270);
+	display_timer(300, 270);
 	if (food_flag) {
 		//glPushMatrix();
 		//glutSolidCube(5);
 		//glPopMatrix();
 		draw_food(x_cursor_food, y_cursor_food);
+		handle_food_ingest();
 	}
-	display_score(250, -270);
-	display_timer(300, 270);
 	if (end_game) {
 		glutKeyboardFunc(NULL);
 		display_game_over(-50, 0, -150);
@@ -653,7 +769,7 @@ void passive_motion_handler(int x, int y) {
 	y_cursor_food = 300 - y;
 	if (x_cursor_food >= x_min && x_cursor_food <= x_max && y_cursor_food >= y_min && y_cursor_food <= y_max) {
 		food_flag = true;
-		glutPostRedisplay();
+		//glutPostRedisplay();
 	}
 	cout << "food x is" << x_cursor_food << endl;
 	cout << "food y is " << y_cursor_food << endl;
@@ -691,29 +807,29 @@ void keyboard_func(unsigned char key, int x, int y) {
 	case 'H': case'h':
 		x_min = x_min - 5;
 		x_max = x_max - 5;
-		glutPostRedisplay();
+		//glutPostRedisplay();
 		break;
 	case 'J': case'j':
 		x_min = x_min + 5;
 		x_max = x_max + 5;
-		glutPostRedisplay();
+		//glutPostRedisplay();
 		break;
 	case 'U': case 'u':
 		y_min = y_min + 5;
 		y_max = y_max + 5;
-		glutPostRedisplay();
+		//glutPostRedisplay();
 		break;
 	case 'N': case 'n':
 		y_min = y_min - 5;
 		y_max = y_max - 5;
-		glutPostRedisplay();
+		//glutPostRedisplay();
 		break;
 	case 'F': case 'f':
 		x_cursor_food = x - 400;
 		y_cursor_food = 300 - y;
 		if (x_cursor_food >= x_min && x_cursor_food <= x_max && y_cursor_food >= y_min && y_cursor_food <= y_max) {
 			food_flag = true;
-			glutPostRedisplay();
+			//glutPostRedisplay();
 		}
 		glutTimerFunc(1000, timer_func, 7);
 		break;
@@ -748,8 +864,9 @@ int main(int argc, char ** argv) {
 	my_setup(canvas_Width, canvas_Height, canvas_Name);
 	glutDisplayFunc(display_func);
 	glutKeyboardFunc(keyboard_func);
-	//glutTimerFunc(62, timer_func, 1);
-	//glutTimerFunc(2000, timer_func, 6);
+	glutTimerFunc(62, timer_func, 1);
+	glutTimerFunc(2000, timer_func, 6);
+	glutTimerFunc(1000, timer_func, 8);
 	//glutMouseFunc(measure);
 	//glutPassiveMotionFunc(measure_one);
 	//glutPassiveMotionFunc(passive_motion_handler);
