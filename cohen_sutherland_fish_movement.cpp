@@ -78,7 +78,7 @@ static double x_tip_head;
 bool done = false;
 bool front = true;
 bool back = false;
-static bool fed = false;
+static bool fed;
 bool food_flag;
 static int random_rotation_angle;
 
@@ -113,10 +113,10 @@ void init(void) {
 	x_max = 200;
 	y_min = -150;
 	y_max = 150;
-	//x_min = -400;
-	//x_max = 400;
-	//y_min = -300;
-	//y_max = 300;
+	/*x_min = -400;
+	x_max = 400;
+	y_min = -300;
+	y_max = 300;*/
 	score = 0;
 	timer = 8;
 	random_rotation_angle = 0;
@@ -133,6 +133,7 @@ void init(void) {
 	fish1_direction = true; //clockwise
 	fish2_direction = false;
 	food_flag = false;
+	fed = false;
 
 	x_cursor_food = 0;
 	y_cursor_food = 0;
@@ -449,7 +450,7 @@ void draw_fish(double x1, double y1, double x2, double y2, bool clockwise, doubl
 	glTranslated(x1, y1, 0);
 	glRotated(random_rotation_angle, 0, 0, 1);
 	glTranslated(-x1, -y1, 0);
-	draw_cohen_sutherland_line_clip(x1, y1, x2, y2);
+	//draw_cohen_sutherland_line_clip(x1, y1, x2, y2);
 	//when using angle
 	/*
 	draw_fish_line(x1, y1, x1, y1 + height + 5, -angle);
@@ -483,32 +484,131 @@ void draw_fish(double x1, double y1, double x2, double y2, bool clockwise, doubl
 	glTranslated(-x1, -y1, 0);*/
 	
 	if (clockwise) {
-		draw_fish_head_clockwise(x2+1, y2-5, x2+1, y2+5);
+		draw_fish_head_clockwise(x2, y2-5, x2, y2+5);
 	}
 	else {
-		draw_fish_head_anticlockwise(x1-1, y1 - 5, x1-1, y1 + 5);	
+		draw_fish_head_anticlockwise(x1, y1 - 5, x1, y1 + 5);	
 	}
 	glPopMatrix();
 
 }
 
-void handle_food_ingest() {
-	if (fish1_direction == true) {
-		if (x_move_fish1 < x_cursor_food - 10) {
-			fed = true;
-			//score += 50;
-			//timer = 8;
+void handle_food_ingest_fish1() {
+	if ((x_tip_head_fish1 - x_cursor_food <= 10 && x_tip_head_fish1 - x_cursor_food > 0) || (x_tip_head_fish1 - x_cursor_food >= -10 && x_tip_head_fish1 - x_cursor_food < 0))
+		//&&
+		//(y_move_fish1 - y_cursor_food <= 10 && y_move_fish1 - y_cursor_food >= 0) || (y_move_fish1 - y_cursor_food >= -20 && y_move_fish1 - y_cursor_food <= 0)) 
+	{
+		fed = true;
+	}
+}
+
+
+void handle_food_ingest_fish2() {
+	if ((x_tip_head_fish2 - x_cursor_food <= 10 && x_tip_head_fish2 - x_cursor_food > 0) || (x_tip_head_fish2 - x_cursor_food >= -10 && x_tip_head_fish2 - x_cursor_food < 0))
+		//&&
+		//(y_move_fish1 - y_cursor_food <= 10 && y_move_fish1 - y_cursor_food >= 0) || (y_move_fish1 - y_cursor_food >= -20 && y_move_fish1 - y_cursor_food <= 0)) 
+	{
+		fed = true;
+	}
+}
+
+/*void handle_fish1_ingest(int rotation_angle) {
+	if (random_rotation_angle == 0) {
+		if (fish1_direction == true) {
+			if (x_cursor_food - x_tip_head_fish1 <= 10 && (x_cursor_food - x_tip_head_fish1) >= 0) {
+				fed = true;
+			}
+		}
+		else {
+			if ((x_cursor_food - x_tip_head_fish1) >= -10 && (x_cursor_food - x_tip_head_fish1) <= 0) {
+				fed = true;
+			}
+		}
+	} else if(random_rotation_angle == 45){
+		if (fish1_direction == true) {
+			//cout << "condition met " << endl;
+			if ((x_cursor_food - x_tip_head_fish1 <= 50) && (x_cursor_food - x_tip_head_fish1 > 0) && (x_cursor_food > 0) &&
+				(y_cursor_food- y_move_fish1 <=50) && (y_cursor_food- y_move_fish1 > 0)) {
+				//cout << "feded" << endl;
+				fed = true;
+			}
+		}
+		else {
+			if (x_cursor_food <= x_move_fish1 + 10 && x_cursor_food > x_move_fish1 && y_cursor_food <= y_move_fish1 + 10 && y_cursor_food > y_move_fish1) {
+				fed = true;
+			}
 		}
 	}
 	else {
-		if (x_move_fish1 > x_cursor_food + 10) {
+		if (x_cursor_food >= x_move_fish1 + 10 && x_cursor_food < x_move_fish1 && y_cursor_food <= y_move_fish1 + 10 && y_cursor_food > y_move_fish1) {
 			fed = true;
-			//score += 50;
-			//score += 50;
-			//timer = 8;
+		}
+		else {
+			if (x_cursor_food <= x_move_fish1 + 10 && x_cursor_food > x_move_fish1 && y_cursor_food >= y_move_fish1 + 10 && y_cursor_food <y_move_fish1) {
+				fed = true;
+			}
+		}
+
+	}
+}*/
+
+/*void handle_fish2_ingest(int rotation_angle) {
+	if (random_rotation_angle == 0) {
+		if (fish2_direction == true) {
+			//cout << "fish direction is " << fish2_direction << endl;
+			if ((x_cursor_food - x_tip_head_fish2) <= 10 && (x_cursor_food - x_tip_head_fish2) >=0) {
+				//cout << "difference between xcursor and xtipfish is " << (x_cursor_food - x_tip_head_fish2) << endl;
+				fed = true;
+			}
+		}
+		else {
+			//cout << "difference between xtipfish and xcursor is " << (x_tip_head_fish2 - x_cursor_food) << endl;
+			//cout << "addition  between xtipfish and xcursor is " << (x_tip_head_fish2 + x_cursor_food) << endl;
+			if ((x_cursor_food - x_tip_head_fish2) >= -10 && (x_cursor_food - x_tip_head_fish2) <= -1) {
+				//cout << "condition satisfied" << endl;
+				fed = true;
+			}
 		}
 	}
-}
+	else if (random_rotation_angle == 45) {
+		if (fish2_direction == true) {
+			if ((x_tip_head_fish2 - x_cursor_food <= 10 && x_tip_head_fish2 - x_cursor_food >= 0) || (x_tip_head_fish2 - x_cursor_food >= -10 && x_tip_head_fish2 - x_cursor_food <= 0)) {
+				{
+				fed = true;
+			}
+		}
+		else {
+			cout << "x tip head fish 1" << x_tip_head_fish2 << endl;
+			cout << "x cursor food " << x_cursor_food << endl;
+			cout << "y_move_fish 2" << y_move_fish2 << endl;
+			cout << "y_cursor food " << y_cursor_food << endl;
+			cout << "=========================================" << endl;
+			//if (((abs(x_tip_head_fish2) -abs(x_cursor_food) <= 30)) && (abs(x_tip_head_fish2) - abs(x_cursor_food) > 0) && (abs(x_cursor_food)  > 0))
+			if ((x_tip_head_fish2 - x_cursor_food <= 10 && x_tip_head_fish2 - x_cursor_food >= 0) || (x_tip_head_fish2 - x_cursor_food >= -10 && x_tip_head_fish2 - x_cursor_food <= 0)) {
+				//&&
+				//(abs(y_move_fish2)-abs(y_cursor_food)  <= 30) && (abs(y_move_fish2) - abs(y_cursor_food) > -10)) {
+				{
+					cout << "feded" << endl;
+					fed = true;
+				}
+			}
+		}
+	}
+	else {
+		if (fish2_direction == true) {
+			if ((x_tip_head_fish2 - x_cursor_food <= 10 && x_tip_head_fish2 - x_cursor_food >= 0) || (x_tip_head_fish2 - x_cursor_food >= -10 && x_tip_head_fish2 - x_cursor_food <= 0)) {
+				fed = true;
+			}
+		}
+		else {
+			if ((x_tip_head_fish2 - x_cursor_food <= 10 && x_tip_head_fish2 - x_cursor_food >= 0) || (x_tip_head_fish2 - x_cursor_food >= -10 && x_tip_head_fish2 - x_cursor_food <= 0)) {
+				fed = true;
+			}
+		}
+
+	}
+
+}*/
 
 void draw_food(int x, int y) {
 	glColor3d(1, 1, 0);
@@ -517,7 +617,7 @@ void draw_food(int x, int y) {
 	glTranslated(x, y, 0);
 	glutSolidCube(5);
 	glPopMatrix();
-	handle_food_ingest();
+	//handle_food_ingest();
 	//glutPostRedisplay();
 	//glutTimerFunc(1000, timer_func, 7);
 	
@@ -639,18 +739,20 @@ void timer_func(int val) {
 		}*/
 		fish1_turn_back(0);
 		fish2_turn_back(0);
+		handle_food_ingest_fish1();
+		handle_food_ingest_fish2();
 		if (fish1_direction) {
-			x_move_fish1 += 0.4;
+			x_move_fish1 += 4;
 		}
 		else {
-			x_move_fish1 -= 0.4;
+			x_move_fish1 -= 4;
 		}
 
 		if (fish2_direction) {
-			x_move_fish2 += 0.4;
+			x_move_fish2 += 4;
 		}
 		else {
-			x_move_fish2 -= 0.4;
+			x_move_fish2 -= 4;
 		}
 		glutPostRedisplay();
 		glutTimerFunc(62, timer_func, 1);
@@ -664,22 +766,24 @@ void timer_func(int val) {
 		}*/
 		fish1_turn_back(45);
 		fish2_turn_back(45);
+		handle_food_ingest_fish1();
+		handle_food_ingest_fish2();
 		if (fish1_direction) {
-			x_move_fish1 += 0.4;
-			y_move_fish1 += 0.4;
+			x_move_fish1 += 4;
+			y_move_fish1 += 4;
 		}
 		else {
-			x_move_fish1 -= 0.4;
+			x_move_fish1 -= 4;
 			y_move_fish1 -= 4;
 		}
 
 		if (fish2_direction) {
-			x_move_fish2 += 0.4;
-			y_move_fish2 += 0.4;
+			x_move_fish2 += 4;
+			y_move_fish2 += 4;
 		}
 		else {
-			x_move_fish2 -= 0.4;
-			y_move_fish2 -= 0.4;
+			x_move_fish2 -= 4;
+			y_move_fish2 -= 4;
 		}
 		fish1_end_boundary_test();
 		fish2_end_boundary_test();
@@ -695,23 +799,25 @@ void timer_func(int val) {
 		}*/
 		fish1_turn_back(-45);
 		fish2_turn_back(-45);
+		handle_food_ingest_fish1();
+		handle_food_ingest_fish2();
 			if (fish1_direction) {
-				x_move_fish1 += 0.4;
-				y_move_fish1 -= 0.4;
+				x_move_fish1 += 4;
+				y_move_fish1 -= 4;
 			}
 			else {
-				x_move_fish1 -= 0.4;
-				y_move_fish1 += 0.4;
+				x_move_fish1 -= 4;
+				y_move_fish1 += 4;
 			}
 
 			if (fish2_direction) {
-				x_move_fish2 += 0.4;
-				y_move_fish2 -= 0.4;
+				x_move_fish2 += 4;
+				y_move_fish2 -= 4;
 				
 			}
 			else {
-				x_move_fish2 -= 0.4;
-				y_move_fish2 += 0.4;
+				x_move_fish2 -= 4;
+				y_move_fish2 += 4;
 			}
 			fish1_end_boundary_test();
 			fish2_end_boundary_test();
@@ -735,11 +841,7 @@ void timer_func(int val) {
 		if (timer < 0){
 			timer = 0;
 		}
-		if (fed) {
-			timer = 8;
-			score += 50;
-			fed = false;
-		}
+		
 		glutTimerFunc(1000, timer_func, 8);
 		break;
 	case 10:
@@ -779,6 +881,7 @@ void display_func(void) {
 		glutKeyboardFunc(NULL);
 		display_game_over(-50, 0, -150);
 	}
+	
 	//glutTimerFunc(1000, timer_func, 7);
 	glutSwapBuffers();
 	glFlush();
@@ -848,11 +951,17 @@ void keyboard_func(unsigned char key, int x, int y) {
 		//glutPostRedisplay();
 		break;
 	case 'F': case 'f':
+		//fed = false;
 		x_cursor_food = x - 400;
 		y_cursor_food = 300 - y;
 		if (x_cursor_food >= x_min && x_cursor_food <= x_max && y_cursor_food >= y_min && y_cursor_food <= y_max) {
 			food_flag = true;
 			glutPostRedisplay();
+		}
+		if (food_flag && fed) {
+			timer = 8;
+			score += 50;
+			fed = false;
 		}
 		glutTimerFunc(1000, timer_func, 7);
 		break;
@@ -887,11 +996,12 @@ int main(int argc, char ** argv) {
 	my_setup(canvas_Width, canvas_Height, canvas_Name);
 	glutDisplayFunc(display_func);
 	glutKeyboardFunc(keyboard_func);
-	//glutTimerFunc(62, timer_func, 1);
-	//glutTimerFunc(2000, timer_func, 6);
+	glutTimerFunc(62, timer_func, 1);
+	glutTimerFunc(2000, timer_func, 6);
 	glutTimerFunc(1000, timer_func, 8);
+	//glutTimerFunc(50000, timer_func, 5);
 	//glutMouseFunc(measure);
-	glutTimerFunc(62, timer_func, 10);
+	//glutTimerFunc(62, timer_func, 10);
 	//glutPassiveMotionFunc(measure_one);
 	//glutPassiveMotionFunc(passive_motion_handler);
 	// Set up light source at the world origin. Initialized at main to reduce overhead though small if initialized in the
