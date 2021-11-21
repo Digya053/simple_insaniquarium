@@ -80,6 +80,8 @@ bool front = true;
 bool back = false;
 static bool fed;
 bool food_flag;
+bool happy_fish = false;
+bool sad_fish = false;
 static int random_rotation_angle;
 
 static float matShine[] = { 25 };	//Shininess value used throughout the program
@@ -88,6 +90,8 @@ static int score;			//Flag to keep track of the score
 static int timer;
 char canvas_Name[] = "Fish Movement with Cohen Sutherland"; // Name at the top of canvas
 char game_over[] = "GAME OVER"; // Display after game is over
+char fish_happiness[] = "The fish is happy. It has been recently fed.";
+char fish_sadness[] = "The fish is sad. It hasn't been recently fed.";
 
 
 enum {
@@ -250,6 +254,41 @@ void display_game_over(double x, double y, double z) {
 	glPushMatrix();
 	glRasterPos3d(x, y, z);
 	writeBitmapString(GLUT_BITMAP_HELVETICA_12, game_over);
+	glPopMatrix();
+}
+
+void display_happy_msg(double x, double y, double z) {
+	/*
+	This function is used for displaying game over at the end of game.
+	----------
+		x: float
+			The x-position where the game over should be placed.
+		y: float
+			The y-position where the game over should be placed.
+		z: float
+			The z-position where the game over should be placed.
+	*/
+	glPushMatrix();
+	glRasterPos3d(x, y, z);
+	writeBitmapString(GLUT_BITMAP_HELVETICA_12, fish_happiness);
+	glPopMatrix();
+}
+
+
+void display_sad_msg(double x, double y, double z) {
+	/*
+	This function is used for displaying game over at the end of game.
+	----------
+		x: float
+			The x-position where the game over should be placed.
+		y: float
+			The y-position where the game over should be placed.
+		z: float
+			The z-position where the game over should be placed.
+	*/
+	glPushMatrix();
+	glRasterPos3d(x, y, z);
+	writeBitmapString(GLUT_BITMAP_HELVETICA_12, fish_sadness);
 	glPopMatrix();
 }
 
@@ -845,8 +884,8 @@ void timer_func(int val) {
 		glutTimerFunc(1000, timer_func, 8);
 		break;
 	case 10:
-		glutPostRedisplay();
-		glutTimerFunc(62, timer_func, 10);
+		happy_fish = false;
+		sad_fish = false;
 		break;
 	default:
 		break;
@@ -880,6 +919,17 @@ void display_func(void) {
 	if (end_game) {
 		glutKeyboardFunc(NULL);
 		display_game_over(-50, 0, -150);
+	}
+	if (happy_fish) {
+		glColor3f(1, 1, 1);
+		display_happy_msg(-400,-270,0);
+		glutTimerFunc(1000, timer_func, 10);
+	}
+
+	if (sad_fish) {
+		glColor3f(1, 1, 1);
+		display_sad_msg(-400,-270,0);
+		glutTimerFunc(1000, timer_func, 10);
 	}
 	
 	//glutTimerFunc(1000, timer_func, 7);
@@ -961,7 +1011,11 @@ void keyboard_func(unsigned char key, int x, int y) {
 		if (food_flag && fed) {
 			timer = 8;
 			score += 50;
+			happy_fish = true;
 			fed = false;
+		}
+		else {
+			sad_fish = true;
 		}
 		glutTimerFunc(1000, timer_func, 7);
 		break;
