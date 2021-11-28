@@ -9,11 +9,14 @@
 
 using namespace std;
 
-static int end_game;
+static bool end_game;
 static int x_min;
 static int x_max;
 static int y_min;
 static int y_max;
+
+static double move = 4;
+
 static double x_move_fish1;
 static double y_move_fish1;
 static bool fish1_direction;
@@ -21,38 +24,39 @@ static bool fish2_direction;
 
 static string fish_name;
 
-static int x_cursor_food;
-static int y_cursor_food;
+static double x_cursor_food;
+static double y_cursor_food;
+
+static double bonus_x_pos;
+static double bonus_y_pos;
 
 static double x_move_fish2;
 static double y_move_fish2;
-
 static double x_tip_head_fish1;
-
 static double x_tip_head_fish2;
+
 static bool fed;
 static bool bonus_fed;
+
 bool food_flag;
-bool happy_fish = false;
-bool sad_fish = false;
-bool bonus_food = false;
-bool food = false;
-bool msg_flag = true;
+bool happy_fish;
+bool sad_fish;
 bool happy_fish1;
 bool happy_fish2;
 bool unhappy_fish1;
 bool unhappy_fish2;
-bool happy_face_fish1 = false;
-bool happy_face_fish2 = false;
-bool gameover = false;
+bool bonus_food;
+bool food;
+
+bool happy_face_fish1;
+bool happy_face_fish2;
+
 bool fish1_fed;
 bool fish2_fed;
 int fish1_score;
 int fish2_score;
-static int random_rotation_angle;
 
-static float bonus_x_pos;
-static float bonus_y_pos;
+static int random_rotation_angle;
 
 static int score;			//Flag to keep track of the score
 static int timer;
@@ -61,9 +65,7 @@ static float matShine[] = { 100 };	//Shininess value used throughout the program
 
 
 char canvas_Name[] = "Fish Movement with Cohen Sutherland"; // Name at the top of canvas
-char game_over[] = "GAME OVER"; // Display after game is over
-char fish_happiness[] = "The fish is happy. It has been recently fed.";
-char fish_sadness[] = "The fish is sad. It hasn't been recently fed.";
+
 
 enum {
 	INSIDE = 0, LEFT = 1, RIGHT = 2, BOTTOM = 4, TOP = 8
@@ -108,21 +110,28 @@ void init(void) {
 	x_cursor_food = 0;
 	y_cursor_food = 0;
 	x_tip_head_fish1 = 0;
-
 	x_tip_head_fish2 = 0;
 	bonus_x_pos = 0;
 	bonus_y_pos = 0;
+
+	fish1_score = 0;
+	fish2_score = 0;
+
+	food = false;
 	bonus_food = false;
 	bonus_fed = false;
 	fish1_fed = false;
 	fish2_fed = false;
-	fish1_score = 0;
-	fish2_score = 0;
+	
+	happy_fish = false;
+	sad_fish = false;
 	happy_fish1 = false;
 	happy_fish2 = false;
 	unhappy_fish1 = false;
 	unhappy_fish2 = false;
-	//find_bonus_food_coordinates();	
+
+	happy_face_fish1 = false;
+	happy_face_fish2 = false;
 }
 
 void draw_subcanvas(double x_min, double x_max, double y_min, double y_max) {
@@ -221,6 +230,56 @@ void draw_fish_head_anticlockwise_new(double x, double y, double height_l1) {
 	draw_cohen_sutherland_line_clip(x, y - 10, x - height_l1, y);
 }
 
+void handle_fish1_move(double x, double y, bool clockwise, string fishname, double diamond_l1, double head_l1) {
+	if (clockwise) {
+		x_tip_head_fish1 = x + diamond_l1 + head_l1;
+		if (happy_face_fish1) {
+			draw_cohen_sutherland_line_clip(x + diamond_l1 + 3, y, x + diamond_l1 + 4, y - 4);
+			draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y - 4, x + diamond_l1 + 7, y);
+		}
+		else if (unhappy_fish1) {
+			draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y, x + diamond_l1 + 2, y - 4);
+			draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y, x + diamond_l1 + 7, y - 4);
+		}
+	}
+	else if (!clockwise) {
+		x_tip_head_fish1 = x - diamond_l1 - head_l1;
+		if (happy_face_fish1) {
+			draw_cohen_sutherland_line_clip(x - diamond_l1 - 3, y, x - diamond_l1 - 4, y - 4);
+			draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y - 4, x - diamond_l1 - 7, y);
+		}
+		else if (unhappy_fish1) {
+			draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y, x - diamond_l1 - 2, y - 4);
+			draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y, x - diamond_l1 - 7, y - 4);
+		}
+	}
+}
+
+void handle_fish2_move(double x, double y, bool clockwise, string fishname, double diamond_l1, double head_l1) {
+	if (clockwise) {
+	x_tip_head_fish2 = x + diamond_l1 + head_l1;
+	if (happy_face_fish2) {
+		draw_cohen_sutherland_line_clip(x + diamond_l1 + 3, y, x + diamond_l1 + 4, y - 4);
+		draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y - 4, x + diamond_l1 + 7, y);
+	}
+	else if (unhappy_fish2) {
+		draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y, x + diamond_l1 + 2, y - 4);
+		draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y, x + diamond_l1 + 7, y - 4);
+	}
+	}
+	else if (!clockwise) {
+	x_tip_head_fish2 = x - diamond_l1 - head_l1;
+	if (happy_face_fish2) {
+		draw_cohen_sutherland_line_clip(x - diamond_l1 - 3, y, x - diamond_l1 - 4, y - 4);
+		draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y - 4, x - diamond_l1 - 7, y);
+	}
+	else if (unhappy_fish2) {
+		draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y, x - diamond_l1 - 2, y - 4);
+		draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y, x - diamond_l1 - 7, y - 4);
+	}
+	}
+}
+
 void draw_fish_new(double x, double y, int length, int height, bool clockwise, string fishname) {
 	// x and y are the fish centers
 	glPushMatrix();
@@ -232,50 +291,13 @@ void draw_fish_new(double x, double y, int length, int height, bool clockwise, s
 	draw_cohen_sutherland_line_clip(x, y + hypotenuse, x - diamond_l1, y);
 	draw_cohen_sutherland_line_clip(x - diamond_l1, y, x, y - hypotenuse);
 	draw_cohen_sutherland_line_clip(x, y - hypotenuse, x + diamond_l1, y);
-	if (fishname == "fish1" && clockwise) {
-		x_tip_head_fish1 = x + diamond_l1 + head_l1;
-		if (happy_face_fish1) {
-			draw_cohen_sutherland_line_clip(x + diamond_l1 + 3, y, x + diamond_l1 + 4, y - 4);
-			draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y - 4, x + diamond_l1 + 7, y);
-		}
-		else if (unhappy_fish1) {
-			draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y, x + diamond_l1 + 2, y - 4);
-			draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y, x + diamond_l1 + 7, y-4);
-		}
+	if (fishname == "fish1") {
+		handle_fish1_move(x, y, clockwise, fishname, diamond_l1, head_l1);
 	}
-	else if (fishname == "fish1" && !clockwise) {
-		x_tip_head_fish1 = x - diamond_l1 - head_l1;
-		if (happy_face_fish1) {
-			draw_cohen_sutherland_line_clip(x - diamond_l1 - 3, y, x - diamond_l1 - 4, y - 4);
-			draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y - 4, x - diamond_l1 - 7, y);
-		}
-		else if (unhappy_fish1) {
-			draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y, x - diamond_l1 - 2, y - 4);
-			draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y, x - diamond_l1 - 7, y - 4);
-		}
+	else if (fishname == "fish2") {
+		handle_fish2_move(x, y, clockwise, fishname, diamond_l1, head_l1);
 	}
-	else if (fishname == "fish2" && clockwise) {
-		x_tip_head_fish2 = x + diamond_l1 + head_l1;
-		if (happy_face_fish2) {
-			draw_cohen_sutherland_line_clip(x + diamond_l1 + 3, y, x + diamond_l1 + 4, y - 4);
-			draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y - 4, x + diamond_l1 + 7, y);
-		}
-		else if (unhappy_fish2) {
-			draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y, x + diamond_l1 + 2, y - 4);
-			draw_cohen_sutherland_line_clip(x + diamond_l1 + 4, y, x + diamond_l1 + 7, y - 4);
-		}
-	}
-	else if (fishname == "fish2" && !clockwise) {
-		x_tip_head_fish2 = x - diamond_l1 - head_l1;
-		if (happy_face_fish2) {
-			draw_cohen_sutherland_line_clip(x - diamond_l1 - 3, y, x - diamond_l1 - 4, y - 4);
-			draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y - 4, x - diamond_l1 - 7, y);
-		}
-		else if (unhappy_fish2) {
-			draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y, x - diamond_l1 - 2, y - 4);
-			draw_cohen_sutherland_line_clip(x - diamond_l1 - 4, y, x - diamond_l1 - 7, y - 4);
-		}
-	}
+	
 	if (clockwise) {
 		draw_fish_head_clockwise_new(x + diamond_l1, y, head_l1);
 	}
@@ -406,6 +428,7 @@ void display_game_over(double x, double y, double z) {
 		z: float
 			The z-position where the game over should be placed.
 	*/
+	char game_over[] = "GAME OVER"; // Display after game is over
 	glColor3f(1.0, 0.0, 0.0);
 	glPushMatrix();
 	glRasterPos3d(x, y, z);
@@ -426,11 +449,8 @@ void display_fish1_happy_msg(double x, double y, double z) {
 	*/
 	char fish1_happiness[] = "Fish1 is happy. It has just been fed.";
 	glPushMatrix();
-	if (msg_flag) {
-		glRasterPos3d(x, y, z);
-		writeBitmapString(GLUT_BITMAP_HELVETICA_12, fish1_happiness);
-		msg_flag = false;
-	}
+	glRasterPos3d(x, y, z);
+	writeBitmapString(GLUT_BITMAP_HELVETICA_12, fish1_happiness);
 	glPopMatrix();
 }
 
@@ -465,11 +485,8 @@ void display_fish1_unhappy_msg(double x, double y, double z) {
 	*/
 	char fish1_happiness[] = "Fish1 is unhappy. It hasn't been fed for 8s.";
 	glPushMatrix();
-	if (msg_flag) {
-		glRasterPos3d(x, y, z);
-		writeBitmapString(GLUT_BITMAP_HELVETICA_12, fish1_happiness);
-		msg_flag = false;
-	}
+	glRasterPos3d(x, y, z);
+	writeBitmapString(GLUT_BITMAP_HELVETICA_12, fish1_happiness);
 	glPopMatrix();
 }
 
@@ -486,11 +503,8 @@ void display_fish2_unhappy_msg(double x, double y, double z) {
 	*/
 	char fish2_happiness[] = "Fish2 is unhappy. It hasn't been fed for 8s.";
 	glPushMatrix();
-	if (msg_flag) {
-		glRasterPos3d(x, y, z);
-		writeBitmapString(GLUT_BITMAP_HELVETICA_12, fish2_happiness);
-		msg_flag = false;
-	}
+	glRasterPos3d(x, y, z);
+	writeBitmapString(GLUT_BITMAP_HELVETICA_12, fish2_happiness);
 	glPopMatrix();
 }
 
@@ -507,6 +521,7 @@ void display_happy_msg(double x, double y, double z) {
 		z: float
 			The z-position where the game over should be placed.
 	*/
+	char fish_happiness[] = "The fish is happy. It has been recently fed.";
 	glPushMatrix();
 	glRasterPos3d(x, y, z);
 	writeBitmapString(GLUT_BITMAP_HELVETICA_12, fish_happiness);
@@ -525,6 +540,7 @@ void display_sad_msg(double x, double y, double z) {
 		z: float
 			The z-position where the game over should be placed.
 	*/
+	char fish_sadness[] = "Both fishes are sad. They haven't been recently fed.";
 	glPushMatrix();
 	glRasterPos3d(x, y, z);
 	writeBitmapString(GLUT_BITMAP_HELVETICA_12, fish_sadness);
@@ -533,10 +549,6 @@ void display_sad_msg(double x, double y, double z) {
 
 void draw_food(int x, int y) {
 	glColor3d(1, 1, 0);
-	/*draw_cohen_sutherland_line_clip(x - 2.5, y + 2.5, x - 2.5, y - 2.5);
-	draw_cohen_sutherland_line_clip(x - 2.5, y + 2.5, x + 2.5, y + 2.5);
-	draw_cohen_sutherland_line_clip(x + 2.5, y + 2.5, x+2.5, y-2.5);
-	draw_cohen_sutherland_line_clip(x-2.5, y-2.5, x+2.5, y-2.5);*/
 	glPushMatrix();
 	glTranslatef(x, y, 0);
 	glutSolidCube(5);
@@ -750,7 +762,6 @@ void draw_bonus_food(double x, double y) {
 	glPushMatrix();
 	glTranslated(x, y, 0);
 	glutSolidTorus(6, 13, 30, 30);
-	//glutSolidCube(5);
 	glPopMatrix();
 	glDisable(GL_LIGHTING);
 	glDisable(GL_LIGHT0);
@@ -764,7 +775,6 @@ void calculate_random_angle() {
 	const int array_num[2] = { -45, 45 };
 	int rand_index = rand() % 2;
 	random_rotation_angle = (int)array_num[rand_index];
-	//find_bonus_food_coordinates();
 
 }
 
@@ -839,6 +849,131 @@ void keyboard_func(unsigned char key, int x, int y) {
 	}
 }
 
+void handle_rotation_angle_zero_move() {
+	fish1_turn_back(0);
+	fish2_turn_back(0);
+	if (fish1_direction) {
+		x_move_fish1 += 4;
+	}
+	else {
+		x_move_fish1 -= 4;
+	}
+
+	if (fish2_direction) {
+		x_move_fish2 += 4;
+	}
+	else {
+		x_move_fish2 -= 4;
+	}
+}
+
+void handle_rotation_angle_45_move() {
+	fish1_turn_back(45);
+	fish2_turn_back(45);
+	if (fish1_direction) {
+		x_move_fish1 += 4;
+		y_move_fish1 += 4;
+	}
+	else {
+		x_move_fish1 -= 4;
+		y_move_fish1 -= 4;
+	}
+
+	if (fish2_direction) {
+		x_move_fish2 += 4;
+		y_move_fish2 += 4;
+	}
+	else {
+		x_move_fish2 -= 4;
+		y_move_fish2 -= 4;
+	}
+	fish1_end_boundary_test();
+	fish2_end_boundary_test();
+}
+
+void handle_rotation_angle_minus_45_move() {
+	fish1_turn_back(-45);
+	fish2_turn_back(-45);
+	if (fish1_direction) {
+		x_move_fish1 += 4;
+		y_move_fish1 -= 4;
+	}
+	else {
+		x_move_fish1 -= 4;
+		y_move_fish1 += 4;
+	}
+
+	if (fish2_direction) {
+		x_move_fish2 += 4;
+		y_move_fish2 -= 4;
+
+	}
+	else {
+		x_move_fish2 -= 4;
+		y_move_fish2 += 4;
+	}
+	fish1_end_boundary_test();
+	fish2_end_boundary_test();
+
+}
+
+void handle_bonus_food_ingest() {
+	handle_bonus_ingest_fish1();
+	handle_bonus_ingest_fish2();
+	if (bonus_fed and fish1_fed) {
+		timer = 8;
+		score += 50;
+		fish1_score += 50;
+		fish1_fed = false;
+		happy_fish1 = true;
+		happy_face_fish1 = true;
+
+		bonus_fed = false;
+		bonus_food = false;
+
+	}
+	else if (bonus_fed and fish2_fed) {
+		timer = 8;
+		score += 50;
+		fish2_score += 50;
+		fish2_fed = false;
+		happy_fish2 = true;
+		happy_face_fish2 = true;
+
+		bonus_fed = false;
+		bonus_food = false;
+	}
+}
+
+
+void handle_food_ingest() {
+	handle_ingest_fish1();
+	handle_ingest_fish2();
+	if (fed and fish1_fed) {
+		timer = 8;
+		score += 50;
+		fish1_score += 50;
+		fish1_fed = false;
+		fed = false;
+		happy_fish1 = true;
+		happy_face_fish1 = true;
+	}
+	else if (fed and fish2_fed) {
+		timer = 8;
+		score += 50;
+		fish2_score += 50;
+		fish2_fed = false;
+		fed = false;
+		happy_fish2 = true;
+		happy_face_fish2 = true;
+	}
+	//else {
+		//sad_fish = true;
+
+	//}
+	food_flag = false;
+}
+
 void timer_func(int val) {
 	/*
 	This function is a glut timer callback function which displays 20 new frames in 1 second to enable lizard movement in both anticlockwise and clockwise direction,
@@ -863,138 +998,53 @@ void timer_func(int val) {
 		break;
 
 	case 2:
-		fish1_turn_back(0);
-		fish2_turn_back(0);
-		/*handle_food_ingest_fish1();
-		//handle_bonus_food_ingest_fish1();
-		handle_food_ingest_fish2();
-		//handle_bonus_food_ingest_fish2();*/
-		if (fish1_direction) {
-			x_move_fish1 += 4;
-		}
-		else {
-			x_move_fish1 -= 4;
-		}
-
-		if (fish2_direction) {
-			x_move_fish2 += 4;
-		}
-		else {
-			x_move_fish2 -= 4;
-		}
+		handle_rotation_angle_zero_move();
 		glutPostRedisplay();
-		glutTimerFunc(62, timer_func, 1);
+		glutTimerFunc(63, timer_func, 1);
 		break;
 	case 3:
-		fish1_turn_back(45);
-		fish2_turn_back(45);
-		/*handle_food_ingest_fish1();
-		//handle_bonus_food_ingest_fish1();
-		handle_food_ingest_fish2();
-		//handle_bonus_food_ingest_fish2();*/
-		if (fish1_direction) {
-			x_move_fish1 += 4;
-			y_move_fish1 += 4;
-		}
-		else {
-			x_move_fish1 -= 4;
-			y_move_fish1 -= 4;
-		}
-
-		if (fish2_direction) {
-			x_move_fish2 += 4;
-			y_move_fish2 += 4;
-		}
-		else {
-			x_move_fish2 -= 4;
-			y_move_fish2 -= 4;
-		}
-		fish1_end_boundary_test();
-		fish2_end_boundary_test();
+		handle_rotation_angle_45_move();
 		glutPostRedisplay();
-		glutTimerFunc(62, timer_func, 1);
+		glutTimerFunc(63, timer_func, 1);
 		break;
 	case 4:
-		fish1_turn_back(-45);
-		fish2_turn_back(-45);
-		/*handle_food_ingest_fish1();
-		handle_bonus_food_ingest_fish1();
-		handle_food_ingest_fish2();
-		handle_bonus_food_ingest_fish2();*/
-		if (fish1_direction) {
-			x_move_fish1 += 4;
-			y_move_fish1 -= 4;
-		}
-		else {
-			x_move_fish1 -= 4;
-			y_move_fish1 += 4;
-		}
-
-		if (fish2_direction) {
-			x_move_fish2 += 4;
-			y_move_fish2 -= 4;
-
-		}
-		else {
-			x_move_fish2 -= 4;
-			y_move_fish2 += 4;
-		}
-		fish1_end_boundary_test();
-		fish2_end_boundary_test();
+		handle_rotation_angle_minus_45_move();
 		glutPostRedisplay();
-		glutTimerFunc(62, timer_func, 1);
+		glutTimerFunc(63, timer_func, 1);
 		break;
 	case 5:
 		exit(0);
 		break;
-
 	case 6:
 		calculate_random_angle();
 		glutTimerFunc(2000, timer_func, 6);
 		break;
 	case 7:
-		handle_ingest_fish1();
-		handle_ingest_fish2();
-		if (fed and fish1_fed) {
-			timer = 8;
-			score += 50;
-			fish1_score += 50;
-			fish1_fed = false;
-			fed = false;
-			happy_fish1 = true;
-			happy_face_fish1 = true;
-		}
-		else if (fed and fish2_fed) {
-			timer = 8;
-			score += 50;
-			fish2_score += 50;
-			fish2_fed = false;
-			fed = false;
-			happy_fish2 = true;
-			happy_face_fish2 = true;
-		}
-		//else {
-			//sad_fish = true;
-			
-		//}
-		food_flag = false;
-		//glutPostRedisplay();
+		handle_food_ingest();
 		break;
 	case 8:
 		timer -= 1;
-		if (timer == 0) {
-			gameover = true;
-			//timer = 0;
+		if (timer <= 0) {
+			timer = 0;
+			glutKeyboardFunc(NULL);
+			glutMouseFunc(NULL);
+
 			if (!happy_fish1 and !happy_fish2) {
-				unhappy_fish1 = true;
-				unhappy_fish2 = true;
 				sad_fish = true;
-			} else if (!happy_fish1) {
 				unhappy_fish1 = true;
-			} 
-			else if (!happy_fish2) {
 				unhappy_fish2 = true;
+
+			} else if (!happy_fish1 and !sad_fish) {
+				unhappy_fish1 = true;
+				sad_fish = false;
+				glutPostRedisplay();
 			}
+			else if (!happy_fish2 and !sad_fish) {
+				unhappy_fish2 = true;
+				sad_fish = false;
+				glutPostRedisplay();
+			}
+			end_game = true;
 			glutTimerFunc(2000, timer_func, 5);
 		}
 
@@ -1007,7 +1057,6 @@ void timer_func(int val) {
 		sad_fish = false;
 		break;
 	case 11:
-		//motion_handler2(bonus_x_pos, bonus_y_pos);
 		if (bonus_food == false) {
 			find_bonus_food_coordinates();
 			glutPostRedisplay();
@@ -1016,36 +1065,10 @@ void timer_func(int val) {
 		break;
 		
 	case 12:
-		handle_bonus_ingest_fish1();
-		handle_bonus_ingest_fish2();
-		if (bonus_fed and fish1_fed) {
-				timer = 8;
-				score += 50;
-				fish1_score += 50;
-				fish1_fed = false;
-				happy_fish1 = true;
-				happy_face_fish1 = true;
-				
-				//happy_fish = true;
-				bonus_fed = false;
-				bonus_food = false;
-				
-			}
-		else if (bonus_fed and fish2_fed) {
-				timer = 8;
-				score += 50;
-				fish2_score += 50;
-				fish2_fed = false;
-				happy_fish2 = true;
-				happy_face_fish2 = true;
-				
-				//happy_fish = true;
-				bonus_fed = false;
-				bonus_food = false;
-			}
+		handle_bonus_food_ingest();
 			
-			glutTimerFunc(1000, timer_func, 10);
-			glutTimerFunc(5000, timer_func, 11);
+		glutTimerFunc(1000, timer_func, 10);
+		glutTimerFunc(5000, timer_func, 11);
 
 		break;
 	default:
@@ -1054,7 +1077,42 @@ void timer_func(int val) {
 }
 
 
-
+void display_messages(void) {
+	if (food_flag) {
+		draw_food(x_cursor_food, y_cursor_food);
+	}
+	if (sad_fish) {
+		glColor3f(1, 1, 1);
+		display_sad_msg(-400, -270, 0);
+		glutTimerFunc(4000, timer_func, 10);
+	}
+	else if (happy_fish1) {
+		glColor3f(1, 1, 1);
+		display_fish1_happy_msg(-400, -270, 0);
+		glutTimerFunc(4000, timer_func, 10);
+	}
+	else if (happy_fish2) {
+		glColor3f(1, 1, 1);
+		display_fish2_happy_msg(-400, -270, 0);
+		glutTimerFunc(4000, timer_func, 10);
+	}
+	else if (!sad_fish and unhappy_fish1) {
+		glColor3f(1, 1, 1);
+		display_fish1_unhappy_msg(-400, -270, 0);
+		glutTimerFunc(4000, timer_func, 10);
+	}
+	else if (!sad_fish and unhappy_fish2) {
+		glColor3f(1, 1, 1);
+		display_fish2_unhappy_msg(-400, -270, 0);
+		glutTimerFunc(4000, timer_func, 10);
+	}
+	if (bonus_food) {
+		draw_bonus_food(bonus_x_pos, bonus_y_pos);
+	}
+	if (end_game) {
+		display_game_over(0, 0, 0);
+	}
+}
 
 
 void display_func(void) {
@@ -1068,60 +1126,15 @@ void display_func(void) {
 	draw_subcanvas(x_min, x_max, y_min, y_max);
 	glColor3d(0, 0.7, 1);
 	draw_fish_new(x_move_fish1, y_move_fish1, 50, 25, fish1_direction, "fish1");
-	//draw_fish(x_move_fish1, y_move_fish1, 40 + x_move_fish1, y_move_fish1, fish1_direction, 25, 50, 45, fish1_fed);
 	glColor3d(0, 0.9, 0.1);
 	draw_fish_new(x_move_fish2, y_move_fish2, 40, 30, fish2_direction, "fish2");
-	//draw_fish(x_move_fish2, y_move_fish2, 30 + x_move_fish2, y_move_fish2, fish2_direction, 30, 40, 40, fish2_fed);
-	cout << random_rotation_angle << endl;
 
 	display_score(250, -270);
 	display_fish1_score(-370, 270);
 	display_fish2_score(-370, 250);
 	display_timer(300, 270);
-	if (food_flag) {
-		draw_food(x_cursor_food, y_cursor_food);
-	}
+	display_messages();
 
-	if (end_game) {
-		glutKeyboardFunc(NULL);
-		display_game_over(-50, 0, -150);
-	}
-	/*if (happy_fish) {
-		glColor3f(1, 1, 1);
-		display_happy_msg(-400, -270, 0);
-		glutTimerFunc(1000, timer_func, 10);
-	}*/
-	if (happy_fish1) {
-		glColor3f(1, 1, 1);
-		display_fish1_happy_msg(-400, -270, 0);
-		glutTimerFunc(4000, timer_func, 10);
-	} else if (happy_fish2) {
-		glColor3f(1, 1, 1);
-		display_fish2_happy_msg(-400, -270, 0);
-		glutTimerFunc(4000, timer_func, 10);
-	} else if (sad_fish) {
-		glColor3f(1, 1, 1);
-		display_sad_msg(-400, -270, 0);
-		glutTimerFunc(4000, timer_func, 10);
-		sad_fish = false;
-	} else if (unhappy_fish1) {
-		glColor3f(1, 1, 1);
-		display_fish1_unhappy_msg(-400, -270, 0);
-		glutTimerFunc(4000, timer_func, 10);
-	}
-	else if (unhappy_fish2) {
-		glColor3f(1, 1, 1);
-		display_fish2_unhappy_msg(-400, -270, 0);
-		glutTimerFunc(4000, timer_func, 10);
-	}
-	if (bonus_food) {
-		draw_bonus_food(bonus_x_pos, bonus_y_pos);
-	}
-	if (gameover) {
-		display_game_over(0,0,0);
-	}
-
-	//glutTimerFunc(1000, timer_func, 7);
 	glutSwapBuffers();
 	glFlush();
 
@@ -1133,12 +1146,12 @@ int main(int argc, char ** argv) {
 	glutInit(&argc, argv);
 	my_setup(canvas_Width, canvas_Height, canvas_Name);
 	glutDisplayFunc(display_func);
-	glutTimerFunc(62, timer_func, 1);
+	glutTimerFunc(63, timer_func, 1);
 	glutTimerFunc(2000, timer_func, 6);
 	glutTimerFunc(1000, timer_func, 8);
-	glutTimerFunc(6000, timer_func, 11);
+	//glutTimerFunc(1000, timer_func, 11);
+	glutTimerFunc(60000, timer_func, 5);
 	glutMotionFunc(motion_handler2);
-	glutTimerFunc(30000, timer_func, 5);
 	glutKeyboardFunc(keyboard_func);
 	init();
 	glutMainLoop();
